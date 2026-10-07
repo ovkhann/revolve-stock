@@ -25,10 +25,134 @@ html{-webkit-text-size-adjust:100%}
 .rr-welcome h1{font-family:"Unbounded","Arial Black",sans-serif;font-size:22px;margin:0 0 8px;letter-spacing:.04em;text-transform:uppercase}
 .rr-welcome p{color:var(--muted,#8E8A84);font-size:14.5px;line-height:1.5;margin:0 0 20px}
 .rr-w-err{color:var(--crit,#FF6F61)!important;margin-top:12px!important}
+html.rr-splashing,html.rr-splashing body{background:#0B0B0D;overflow:hidden}
+#rr-splash{position:fixed;inset:0;z-index:1000;background:#0B0B0D;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(18px,4vh,34px);padding-bottom:6vh;-webkit-user-select:none;user-select:none}
+#rr-splash .rr-glow{position:absolute;left:50%;top:46%;width:min(120vw,620px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(216,196,156,.28),rgba(216,196,156,.08) 55%,transparent 72%);opacity:0;pointer-events:none}
+#rr-splash .rr-stage{position:relative;width:min(74vw,320px);aspect-ratio:1;max-width:100%}
+#rr-splash .rr-rings{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transform-origin:50% 50%}
+#rr-splash .rr-ring{fill:none;stroke:#D8C49C;stroke-width:1.1;stroke-dasharray:578.05;stroke-dashoffset:578.05;stroke-linecap:round}
+#rr-splash .rr-comet{fill:none;stroke:#F1EEE8;stroke-width:2.2;stroke-linecap:round;stroke-dasharray:70 508.05;opacity:0;filter:drop-shadow(0 0 4px rgba(216,196,156,.8))}
+#rr-splash .rr-orbit{fill:#D8C49C;opacity:0;transform-origin:100px 100px;transform-box:view-box}
+#rr-splash .rr-mark{position:absolute;left:50%;top:50%;width:76%;transform:translate(-50%,-50%);transform-origin:50% 50%;opacity:0}
+#rr-splash .rr-logo{display:block;width:100%;height:auto}
+#rr-splash .rr-shine{position:absolute;inset:0;opacity:0;background:linear-gradient(105deg,#fff 36%,#E9D7AE 43%,#C9A15C 49%,#B98C45 51%,#E9D7AE 56%,#fff 63%);mix-blend-mode:multiply;background-size:260% 100%;background-repeat:no-repeat;-webkit-mask-image:url(logo.png);mask-image:url(logo.png);-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+#rr-splash .rr-word{display:flex;gap:.62em;font-family:"Unbounded","Arial Black",system-ui,sans-serif;font-weight:600;font-size:12px;letter-spacing:.1em;color:#8E8A84}
+#rr-splash .rr-word span{display:inline-block;opacity:0}
 </style>
 <script src="local-runtime.js"></script>
+<link rel="preload" href="logo.png" as="image">
 </head>
 <body>
+<div id="rr-splash" aria-hidden="true">
+  <div class="rr-glow"></div>
+  <div class="rr-stage">
+    <svg class="rr-rings" viewBox="0 0 200 200">
+      <circle class="rr-ring" cx="100" cy="100" r="92"/>
+      <circle class="rr-comet" cx="100" cy="100" r="92"/>
+      <circle class="rr-orbit" cx="100" cy="8" r="2.4"/>
+      <g class="rr-burst"></g>
+    </svg>
+    <div class="rr-mark">
+      <img class="rr-logo" src="logo.png" alt="">
+      <div class="rr-shine"></div>
+    </div>
+  </div>
+  <div class="rr-word"><span>S</span><span>T</span><span>O</span><span>C</span><span>K</span></div>
+</div>
+<script>
+/* Écran de chargement : animation du logo Revolve Realm (motion design piloté en JS). */
+(function(){
+  var sp = document.getElementById("rr-splash"); if (!sp) return;
+  var $ = function(s){ return sp.querySelector(s); };
+  var mark = $(".rr-mark"), logo = $(".rr-logo"), shine = $(".rr-shine"), ring = $(".rr-ring"), comet = $(".rr-comet"),
+      orbit = $(".rr-orbit"), rings = $(".rr-rings"), glow = $(".rr-glow"), stage = $(".rr-stage"), letters = sp.querySelectorAll(".rr-word span");
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var C = 2 * Math.PI * 92, MIN = reduce ? 500 : 2150, EXIT = reduce ? 300 : 780;
+  var clamp = function(v){ return v < 0 ? 0 : v > 1 ? 1 : v; };
+  var seg = function(t, a, b){ return clamp((t - a) / (b - a)); };
+  var E = {
+    outCubic: function(x){ return 1 - Math.pow(1 - x, 3); },
+    inOutCubic: function(x){ return x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2; },
+    outBack: function(x){ var c1 = 1.70158, c3 = c1 + 1; return 1 + c3*Math.pow(x - 1, 3) + c1*Math.pow(x - 1, 2); },
+    inCubic: function(x){ return x*x*x; },
+    outExpo: function(x){ return x === 1 ? 1 : 1 - Math.pow(2, -10*x); }
+  };
+  var burst = $(".rr-burst"), dots = [];
+  for (var d = 0; d < 16; d++){ var c = document.createElementNS("http://www.w3.org/2000/svg", "circle"); c.setAttribute("r", d % 3 ? 1.3 : 2); c.setAttribute("fill", d % 2 ? "#D8C49C" : "#F1EEE8"); c.style.opacity = 0; burst.appendChild(c); dots.push({el:c, a:d / 16 * Math.PI * 2 + (d % 2) * .12, len:d % 3 ? 26 : 38}); }
+  var mask = function(el, v){ el.style.webkitMaskImage = v; el.style.maskImage = v; };
+  document.documentElement.classList.add("rr-splashing");
+
+  function render(t, ex){
+    if (reduce){
+      mark.style.opacity = clamp(t / 300); ring.style.strokeDashoffset = 0; comet.style.opacity = 0; orbit.style.opacity = 0;
+      for (var i = 0; i < letters.length; i++){ letters[i].style.opacity = clamp(t / 300); }
+    } else {
+      // 1. l'anneau se trace en tournant
+      var r = E.inOutCubic(seg(t, 0, 760));
+      ring.style.strokeDashoffset = C * (1 - r);
+      rings.style.transform = "rotate(" + (-120 + r * 120 + Math.max(0, t - 760) * .012) + "deg)";
+      ring.style.opacity = 1 - .72 * seg(t, 1100, 1600);
+      // 2. révélation du logo en balayage circulaire (il « revolve »)
+      var a = E.inOutCubic(seg(t, 160, 1020)) * 400;
+      if (a < 400) mask(logo, "conic-gradient(from 0deg at 50% 50%, #000 " + Math.max(0, a - 40) + "deg, transparent " + a + "deg)"); else mask(logo, "none");
+      var k = E.outBack(seg(t, 160, 1040)), rot = -28 * (1 - E.outCubic(seg(t, 160, 1040)));
+      var blur = 10 * (1 - E.outCubic(seg(t, 160, 900)));
+      // 3. effet bulle : écrasement / rebond élastique
+      var j = seg(t, 1040, 1520), sx = 1, sy = 1;
+      if (j > 0 && j < 1){ var w = Math.sin(j * Math.PI * 3) * Math.pow(1 - j, 1.6); sx = 1 + .09 * w; sy = 1 - .09 * w; }
+      var breathe = t > 1900 ? 1 + .012 * Math.sin((t - 1900) / 420) : 1;
+      var s = (.78 + .22 * k) * breathe;
+      mark.style.transform = "translate(-50%,-50%) rotate(" + rot + "deg) scale(" + (s * sx) + "," + (s * sy) + ")";
+      mark.style.filter = blur > .1 ? "blur(" + blur + "px)" : "none";
+      mark.style.opacity = clamp(seg(t, 120, 420));
+      // 4. reflet sable qui traverse les lettres
+      var sh = E.inOutCubic(seg(t, 1350, 2000));
+      shine.style.backgroundPosition = (140 - sh * 200) + "% 0";
+      shine.style.opacity = sh > 0 && sh < 1 ? 1 : 0;
+      // éclat de particules quand le logo se pose
+      var b = seg(t, 980, 1560), be = E.outCubic(b);
+      for (var q = 0; q < dots.length; q++){ var D = dots[q], rr = 74 + be * D.len; D.el.setAttribute("cx", 100 + Math.cos(D.a) * rr); D.el.setAttribute("cy", 100 + Math.sin(D.a) * rr); D.el.style.opacity = b > 0 && b < 1 ? (1 - b) : 0; }
+      // 5. comète qui tourne autour pendant le chargement
+      var ct = seg(t, 1200, 1700);
+      comet.style.opacity = ct;
+      comet.style.strokeDashoffset = -((t - 1200) * .32) % C;
+      orbit.style.opacity = ct;
+      orbit.style.transform = "rotate(" + ((t * .22) % 360) + "deg)";
+      glow.style.opacity = (.35 + .2 * Math.sin(t / 520)) * seg(t, 600, 1400);
+      // 6. le mot STOCK arrive lettre par lettre
+      for (var i = 0; i < letters.length; i++){
+        var l = E.outExpo(seg(t, 1500 + i * 70, 1900 + i * 70));
+        letters[i].style.opacity = l; letters[i].style.transform = "translateY(" + (10 * (1 - l)) + "px)";
+      }
+    }
+    // sortie : l'écran s'ouvre en cercle depuis le logo
+    if (ex != null){
+      var x = E.inCubic(clamp(ex / EXIT)), R = x * Math.hypot(innerWidth, innerHeight) * 1.05;
+      mask(sp, R > 0 ? "radial-gradient(circle at 50% 46%, transparent " + R + "px, #000 " + (R + 2) + "px)" : "none");
+      stage.style.transform = "scale(" + (1 + .35 * x) + ")"; stage.style.opacity = 1 - x;
+      $(".rr-word").style.opacity = 1 - clamp(ex / (EXIT * .5));
+    }
+  }
+
+  var t0 = performance.now(), exitStart = null, ready = false, gone = false;
+  window.__rrSplashRender = render; // pour les tests
+  if (/[?&]splashtest/.test(location.search)) return;
+  function go(){ ready = true; }
+  if (window.__rrBooted) go(); else window.addEventListener("rr-booted", go);
+  setTimeout(go, 8000); // filet de sécurité
+  function finish(){ if (gone) return; gone = true; sp.remove(); document.documentElement.classList.remove("rr-splashing"); }
+  function tick(now){
+    var t = now - t0;
+    if (exitStart == null && ready && t >= MIN) exitStart = now;
+    var ex = exitStart == null ? null : now - exitStart;
+    render(t, ex);
+    if (ex != null && ex >= EXIT) return finish();
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  sp.addEventListener("click", function(){ if (ready && exitStart == null) exitStart = performance.now() - (reduce ? 0 : 0); });
+})();
+</script>
 <title>Revolve Realm Stock</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">

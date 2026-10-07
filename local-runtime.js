@@ -148,13 +148,15 @@
 
   /* ----- démarrage ----- */
   let readyResolve; const ready = new Promise(r => readyResolve = r);
+  const signalBooted = () => { window.__rrBooted = true; window.dispatchEvent(new Event("rr-booted")); };
   async function boot(){
     try {
       idb = await openIDB();
       for (const [k, v] of await readAll("docs")) docs.set(k, v);
       for (const [k, v] of await readAll("assets")){ assetBlobs.set(k, v); assetURLs.set(k, URL.createObjectURL(v)); }
       navigator.storage?.persist?.().catch(() => {});
-    } catch(e){ console.error(e); readyResolve(false); return; }
+    } catch(e){ console.error(e); readyResolve(false); signalBooted(); return; }
+    signalBooted();
     let started = false; try { started = localStorage.getItem("rr.started") === "1"; } catch(e){}
     if (!docs.size && !started) await welcome();
     readyResolve(true);

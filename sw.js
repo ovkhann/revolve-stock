@@ -1,6 +1,6 @@
 /* Service worker : l'appli s'ouvre même sans réseau. */
-const VERSION = "rr-v1";
-const SHELL = ["./", "./index.html", "./local-runtime.js", "./pdf-lib.min.js", "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
+const VERSION = "rr-v2";
+const SHELL = ["./", "./index.html", "./logo.png", "./local-runtime.js", "./pdf-lib.min.js", "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
