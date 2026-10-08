@@ -13,3 +13,8 @@ Au premier lancement, importe le fichier de sauvegarde `.json`.
 
 ## Mise à jour
 Remplace les fichiers et incrémente `VERSION` dans `sw.js` (ex. `rr-v2`) pour que l'appli se mette à jour sur le téléphone.
+
+## Chat (Revolve Chat)
+- Serveur : Supabase, projet `revolve-chat` (région Paris). Schéma : `supabase/schema.sql`, fonction de notifications : `supabase/functions/push/index.ts`.
+- `chat-config.js` contient l'URL et la clé publique (anon) : elles sont faites pour être publiques, la sécurité est assurée par les règles d'accès.
+- Le premier compte créé devient admin et choisit le code d'invitation.

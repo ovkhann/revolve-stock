@@ -169,8 +169,10 @@
         <h1>Bienvenue</h1><p>Tes données restent dans ce téléphone. Importe ta sauvegarde pour retrouver ton stock, tes collections et tes magasins.</p>
         <label class="btn primary block" style="cursor:pointer">Importer ma sauvegarde<input type="file" accept=".json,application/json" hidden id="rr-file"></label>
         <button class="btn block" id="rr-empty" style="margin-top:8px">Commencer avec une appli vide</button>
+        <button class="btn block rr-friend" id="rr-friend" style="margin-top:22px">Je viens juste pour le chat</button>
         <p class="rr-w-err" id="rr-err" hidden></p></div>`;
       document.body.append(ov);
+      ov.querySelector("#rr-friend").onclick = () => { try { localStorage.setItem("rr.started", "1"); localStorage.setItem("rr.mode", "chat"); } catch(e){} location.reload(); };
       ov.querySelector("#rr-empty").onclick = () => { try { localStorage.setItem("rr.started", "1"); } catch(e){} ov.remove(); resolve(); };
       ov.querySelector("#rr-file").onchange = async e => {
         const f = e.target.files[0]; if (!f) return;
